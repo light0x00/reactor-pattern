@@ -60,15 +60,28 @@ public class App {
                 System.out.print(StandardCharsets.UTF_8.decode(buffer)); //可能发生最后一个字符被截断导致乱码的情况
                 buffer.clear();
             }
-            System.out.println("Read finish");
+            log.info("Read finish");
         }
     }
 
-    public static class AckEventHandler extends LoggingEventHandler {
+    public static class AckEventHandler extends EventHandler {
         @Override
         public void onRead(EventContext event) throws IOException {
-            super.onRead(event);
-            event.write(ByteBuffer.wrap("ACK".getBytes(StandardCharsets.UTF_8)));
+
+            log.info("Read event");
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            int n;
+            while ((n = event.read(buffer)) > 0) {
+                buffer.flip();
+                System.out.println(StandardCharsets.UTF_8.decode(buffer)); //由于没有实现编码解码,这里可能发生最后一个字符被截断导致乱码的情况
+                buffer.clear();
+            }
+            log.info("Read finish");
+
+            if (n != -1) {
+                event.write(ByteBuffer.wrap("ACK".getBytes(StandardCharsets.UTF_8)));
+            }
+
         }
     }
 }
