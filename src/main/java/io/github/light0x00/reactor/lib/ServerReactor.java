@@ -25,27 +25,18 @@ public class ServerReactor extends Reactor {
         this.reactors = subReactors;
     }
 
-    private IOReactor determineReactor(SocketChannel sc) {
+    private IOReactor assignReactor(SocketChannel sc) {
         int hash = Objects.hashCode(sc);
         int index = hash & (reactors.size() - 1);
         return reactors.get(index);
     }
 
     @Override
-    protected void dispatch(SelectionKey sk) throws IOException {
+    protected void handleEvent(SelectionKey sk) throws IOException {
         if (sk.isAcceptable()) {
             SocketChannel sc = ssc.accept();
-            sc.configureBlocking(false);
-            IOReactor subReactor = determineReactor(sc);
-            subReactor.tasks.add(() -> {
-                try {
-                    subReactor.register(sc);
-                } catch (IOException e) {
-                    sk.cancel();
-                    log.error("", e);
-                }
-            });
-            subReactor.selector.wakeup();
+            IOReactor subReactor = assignReactor(sc);
+            subReactor.register(sc);
         }
     }
 

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -92,11 +92,11 @@ public class EventContext {
 
     public void flush() throws IOException {
         ByteBuffer buf;
-
+        SocketChannel channel = (SocketChannel) selectionKey.channel();
         while ((buf = buffersToWrite.peek()) != null) {
             /* Some types of channels, depending upon their state, may write only some of the bytes or possibly none at all.
             A socket channel in non-blocking mode, for example, cannot write any more bytes than are free in the socket's output buffer.*/
-            ((WritableByteChannel) selectionKey.channel()).write(buf);
+            channel.write(buf);
             if (buf.remaining() == 0) {
                 buffersToWrite.poll();
             } else {

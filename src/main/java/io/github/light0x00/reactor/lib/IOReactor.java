@@ -1,5 +1,7 @@
 package io.github.light0x00.reactor.lib;
 
+import lombok.SneakyThrows;
+
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
@@ -17,14 +19,22 @@ public class IOReactor extends Reactor {
     }
 
     public void register(SelectableChannel channel) throws IOException {
-        SelectionKey sk = channel.register(selector, SelectionKey.OP_READ);
-        EventContext eventContext = new EventContext(sk);
-        sk.attach(eventContext);
-        eventHandler.onEstablished(eventContext);
+        this.tasks.add(new Runnable() {
+            @SneakyThrows
+            @Override
+            public void run() {
+                channel.configureBlocking(false);
+                SelectionKey sk = channel.register(selector, SelectionKey.OP_READ);
+                EventContext eventContext = new EventContext(sk);
+                sk.attach(eventContext);
+                eventHandler.onEstablished(eventContext);
+            }
+        });
+        selector.wakeup();
     }
 
     @Override
-    protected void dispatch(SelectionKey sk) throws IOException {
+    protected void handleEvent(SelectionKey sk) throws IOException {
         EventContext eventContext = (EventContext) sk.attachment();
         if (sk.isReadable()) {
             try {

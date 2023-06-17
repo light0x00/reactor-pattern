@@ -1,5 +1,6 @@
 package io.github.light0x00.reactor.lib;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -11,8 +12,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
- * TODO 对象组合 Dispatcher 来分发事件
- *
  * @author light
  * @since 2022/3/12
  */
@@ -28,14 +27,11 @@ public abstract class Reactor implements Runnable {
     }
 
     public void run() {
-        try {
-            eventLoop();
-        } catch (IOException e) {
-            log.error("An error occur while event loop", e);
-        }
+        eventLoop();
     }
 
-    private void eventLoop() throws IOException {
+    @SneakyThrows
+    private void eventLoop() {
         while (!Thread.interrupted()) {
             Runnable c;
             while ((c = tasks.poll()) != null) {
@@ -46,11 +42,12 @@ public abstract class Reactor implements Runnable {
             Iterator<SelectionKey> it = events.iterator();
             while (it.hasNext()) {
                 SelectionKey event = it.next();
-                dispatch(event);
+                handleEvent(event);
             }
             events.clear();
         }
+        selector.close();
     }
 
-    protected abstract void dispatch(SelectionKey sk) throws IOException;
+    protected abstract void handleEvent(SelectionKey sk) throws IOException;
 }

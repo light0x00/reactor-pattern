@@ -25,7 +25,7 @@ public class ClientReactor extends Reactor {
     }
 
     @Override
-    protected void dispatch(SelectionKey sk) throws IOException {
+    protected void handleEvent(SelectionKey sk) throws IOException {
         EventContext eventContext = (EventContext) sk.attachment();
         if (sk.isConnectable()) {
             /*This method may be invoked at any time.
